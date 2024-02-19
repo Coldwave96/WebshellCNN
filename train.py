@@ -41,7 +41,17 @@ if not os.path.exists(processed_data_path):
 else:
     data_df = pd.read_csv(processed_data_path)
 
+dataset_size = data_df.shape[0]
 dataset = tf.data.Dataset.from_tensor_slices((data_df['word_list'].values, data_df['label'].values))
+shuffled_dataset = dataset.shuffle(buffer_size=dataset_size, seed=23)
+
+train_size = int(0.7 * dataset_size)
+val_size = int(0.1 * dataset_size)
+test_size = 1 - train_size - val_size
+
+train_dataset = shuffled_dataset.take(train_size)
+val_dataset = shuffled_dataset.skip(train_size).take(val_size)
+test_dataset = shuffled_dataset.skip(train_size + val_size)
 
 max_features = 50000
 sequence_length = 1024
@@ -51,14 +61,23 @@ vectorize_layer = tf.keras.layers.TextVectorization(
     output_sequence_length = sequence_length,
 )
 
-vectorize_layer.adapt(data_df['word_list'].values)
+train_word_list = train_dataset.map(lambda x, y: x)
+vectorize_layer.adapt(train_word_list)
 
 def vectorize_text(text, label):
     text = tf.expand_dims(text, -1)
     return vectorize_layer(text), label
 
-vectorized_data = dataset.map(vectorize_text)
+vectorized_train_data = train_dataset.map(vectorize_text)
+vectorized_val_data = val_dataset.map(vectorize_text)
+vectorized_test_data = test_dataset.map(vectorize_text)
 
-for example in vectorized_data.take(1):
-    print("Vectorized Word List:", example[0].numpy())
-    print("Label:", example[1].numpy())
+AUTOTUNE = tf.data.AUTOTUNE
+
+vectorized_train_data = vectorized_train_data.cache().prefetch(buffer_size=AUTOTUNE)
+vectorized_val_data = vectorized_val_data.cache().prefetch(buffer_size=AUTOTUNE)
+vectorized_test_data = vectorized_test_data.cache().prefetch(buffer_size=AUTOTUNE)
+
+# for example in vectorized_train_data.take(1):
+#     print("Vectorized Word List:", example[0].numpy())
+#     print("Label:", example[1].numpy())
