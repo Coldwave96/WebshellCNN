@@ -2,6 +2,8 @@ import os
 import argparse
 import pandas as pd
 import tensorflow as tf
+from joblib import dump, load
+from sklearn.preprocessing import StandardScaler
 
 import utils
 
@@ -41,8 +43,17 @@ if not os.path.exists(processed_data_path):
 else:
     data_df = pd.read_csv(processed_data_path)
 
+scaler_path = f'{FLAGS["data.webshell_folder"].replace("/", "-")}_{FLAGS["data.normal_folder"].replace("/", "-")}_scaler.joblib'
+if not os.path.exists(scaler_path):
+    scaler = StandardScaler()
+    data_df[['file_size', 'entropy']] = scaler.fit_transform(data_df[['file_size', 'entropy']])
+    dump(scaler, scaler_path)
+else:
+    scaler = load(scaler_path)
+    data_df[['file_size', 'entropy']] = scaler.transform(data_df[['file_size', 'entropy']])
+
 dataset_size = data_df.shape[0]
-dataset = tf.data.Dataset.from_tensor_slices((data_df['word_list'].values, data_df['label'].values))
+dataset = tf.data.Dataset.from_tensor_slices((data_df['word_list'].values, data_df[['file_size', 'entropy']].values, data_df['label'].values))
 shuffled_dataset = dataset.shuffle(buffer_size=dataset_size, seed=23)
 
 train_size = int(0.7 * dataset_size)
@@ -61,12 +72,13 @@ vectorize_layer = tf.keras.layers.TextVectorization(
     output_sequence_length = sequence_length,
 )
 
-train_word_list = train_dataset.map(lambda x, y: x)
+train_word_list = train_dataset.map(lambda text, numeric_features, label: text)
+train_numeric_features = train_dataset.map(lambda text, numeric_features, label: numeric_features)
 vectorize_layer.adapt(train_word_list)
 
-def vectorize_text(text, label):
+def vectorize_text(text, numeric_features, label):
     text = tf.expand_dims(text, -1)
-    return vectorize_layer(text), label
+    return vectorize_layer(text), numeric_features, label
 
 vectorized_train_data = train_dataset.map(vectorize_text)
 vectorized_val_data = val_dataset.map(vectorize_text)
@@ -80,4 +92,5 @@ vectorized_test_data = vectorized_test_data.cache().prefetch(buffer_size=AUTOTUN
 
 # for example in vectorized_train_data.take(1):
 #     print("Vectorized Word List:", example[0].numpy())
-#     print("Label:", example[1].numpy())
+#     print("Numeric Features:", example[1].numpy())
+#     print("Label:", example[2].numpy())
