@@ -9,7 +9,7 @@ import utils
 
 parser = argparse.ArgumentParser(description="Train WebshellCNN model")
 
-# Dara args
+# Data args
 default_webshell_folder = "Dataset/webshell"
 parser.add_argument("--data.webshell_folder", type=str, default=default_webshell_folder, help="Path to the folder which contains webshells")
 
