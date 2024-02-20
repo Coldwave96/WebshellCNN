@@ -85,6 +85,7 @@ X_textcnn_train, X_textcnn_test, X_classification_train, X_classification_test, 
 )
 
 model = utils.build_model(sequence_length, 2, max_features, 300)
+model.summary()
 model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
 model.fit([X_textcnn_train, X_classification_train], y_train, epochs=5, batch_size=32, validation_split=0.2)
