@@ -1,9 +1,13 @@
 import os
+import json
 import argparse
+import numpy as np
 import pandas as pd
 import tensorflow as tf
 from joblib import dump, load
+from sklearn.metrics import classification_report
 from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
 
 import utils
 
@@ -55,3 +59,40 @@ if not os.path.exists(scaler_path):
 else:
     scaler = load(scaler_path)
     data_df[['file_size', 'entropy']] = scaler.transform(data_df[['file_size', 'entropy']])
+
+max_features = 50000
+sequence_length = 1024
+text_vectorizer = tf.keras.layers.TextVectorization(max_tokens=max_features, output_mode='int', output_sequence_length=sequence_length)
+text_vectorizer.adapt(data_df['word_list'].values)
+
+text_vectorizer_config = text_vectorizer.get_config()
+vectorizer_config_path = f'Output/TextVectorizer/text_vectorizer_config_{FLAGS["config.version"]}.json'
+with open(vectorizer_config_path, 'w') as f:
+    json.dump(text_vectorizer_config, f)
+
+text_vectorizer_weights = text_vectorizer.get_weights()
+vectorizer_weights_path = f'Output/TextVectorizer/text_vectorizer_weights_{FLAGS["config.version"]}.npy'
+np.save(vectorizer_weights_path, text_vectorizer_weights)
+
+text_vectorized = text_vectorizer(data_df['word_list'].values).numpy()
+
+X_textcnn_train, X_textcnn_test, X_classification_train, X_classification_test, y_train, y_test = train_test_split(
+    text_vectorized, 
+    data_df[['file_size', 'entropy']].values, 
+    data_df['label'].values, 
+    test_size = 0.2,
+    random_state = 23
+)
+
+model = utils.build_model(sequence_length, 2, max_features, 300)
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+model.fit([X_textcnn_train, X_classification_train], y_train, epochs=5, batch_size=32, validation_split=0.2)
+
+y_pred = model.predict([X_textcnn_test, X_classification_test])
+y_pred_binary = np.round(y_pred)
+report = classification_report(y_test, y_pred_binary)
+print(report)
+
+model_weights_path = f'Output/Model/combined_model_weights_{FLAGS["config.version"]}.h5'
+model.save_weights(model_weights_path)
