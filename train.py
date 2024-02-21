@@ -1,5 +1,5 @@
 import os
-import json
+import pickle
 import argparse
 import numpy as np
 import pandas as pd
@@ -65,14 +65,10 @@ sequence_length = 1024
 text_vectorizer = tf.keras.layers.TextVectorization(max_tokens=max_features, output_mode='int', output_sequence_length=sequence_length)
 text_vectorizer.adapt(data_df['word_list'].values)
 
-text_vectorizer_config = text_vectorizer.get_config()
-vectorizer_config_path = f'Output/TextVectorizer/text_vectorizer_config_{FLAGS["config.version"]}.json'
-with open(vectorizer_config_path, 'w') as f:
-    json.dump(text_vectorizer_config, f)
-
-text_vectorizer_weights = text_vectorizer.get_weights()
-vectorizer_weights_path = f'Output/TextVectorizer/text_vectorizer_weights_{FLAGS["config.version"]}.npy'
-np.save(vectorizer_weights_path, text_vectorizer_weights)
+text_vectorizer_vocab = text_vectorizer.get_vocabulary()
+vectorizer_vocab_path = f'Output/TextVectorizer/text_vectorizer_vocab_{FLAGS["config.version"]}.pkl'
+with open(vectorizer_vocab_path, 'wb') as f:
+    pickle.dump(text_vectorizer_vocab, f)
 
 text_vectorized = text_vectorizer(data_df['word_list'].values).numpy()
 
