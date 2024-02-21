@@ -60,7 +60,7 @@ else:
     scaler = load(scaler_path)
     data_df[['file_size', 'entropy']] = scaler.transform(data_df[['file_size', 'entropy']])
 
-max_features = 50000
+max_features = 5000
 sequence_length = 1024
 text_vectorizer = tf.keras.layers.TextVectorization(max_tokens=max_features, output_mode='int', output_sequence_length=sequence_length)
 text_vectorizer.adapt(data_df['word_list'].values)

@@ -43,13 +43,15 @@ vectorizer_vocab_path = f'{FLAGS["config.folder"]}TextVectorizer/text_vectorizer
 with open(vectorizer_vocab_path, 'rb') as f:
     vocabulary = pickle.load(f)
 
-max_features = 50000
+max_features = 5000
 sequence_length = 1024
 
 text_vectorizer = tf.keras.layers.TextVectorization(output_mode='int', output_sequence_length=sequence_length)
 text_vectorizer.set_vocabulary(vocabulary)
 
-x_textcnn_unknown = text_vectorizer(unknown_df['word_list'].values).numpy()
+x_textcnn_unknown = [' '.join(sublist) for sublist in unknown_df['word_list'].values]
+x_textcnn_unknown = text_vectorizer(x_textcnn_unknown)
+
 x_file_info_unknown = unknown_df[['file_size', 'entropy']].values
 
 model_weights_path = f'{FLAGS["config.folder"]}Model/combined_model_weights_{FLAGS["config.version"]}.h5'
