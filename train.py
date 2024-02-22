@@ -27,6 +27,16 @@ parser.add_argument("--data.normal_folder", type=str, default=default_normal_fol
 default_file_extensions = ['.php', '.asp', '.aspx', '.jsp', '.java']
 parser.add_argument("--data.file_extensions", type=list, default=default_file_extensions, help=f"File extension list for training (default: {default_file_extensions})")
 
+# Train args
+default_max_features = 5000
+parser.add_argument("--train.max_features", type=int, default=default_max_features, help=f"Max tokens for TextVectorizer (default: {default_max_features})")
+
+default_sequence_length = 1024
+parser.add_argument("--train.sequence_length", type=int, default=default_sequence_length, help=f"Output sequence length for TextVectorizer (default: {default_sequence_length})")
+
+default_embedding_dim = 300
+parser.add_argument("--train.embedding_dim", type=int, default=default_embedding_dim, help=f"Ouput dimensions of the embedding layer (default: {default_embedding_dim})")
+
 FLAGS = vars(parser.parse_args())
 
 for key, value in FLAGS.items():
@@ -60,8 +70,8 @@ else:
     scaler = load(scaler_path)
     data_df[['file_size', 'entropy']] = scaler.transform(data_df[['file_size', 'entropy']])
 
-max_features = 5000
-sequence_length = 1024
+max_features = FLAGS["train.max_features"]
+sequence_length = FLAGS["train.sequence_length"]
 text_vectorizer = tf.keras.layers.TextVectorization(max_tokens=max_features, output_mode='int', output_sequence_length=sequence_length)
 text_vectorizer.adapt(data_df['word_list'].values)
 
@@ -80,7 +90,8 @@ X_textcnn_train, X_textcnn_test, X_classification_train, X_classification_test, 
     random_state = 23
 )
 
-model = utils.build_model(sequence_length, 2, max_features, 300)
+embedding_dim = FLAGS["train.embedding_dim"]
+model = utils.build_model(sequence_length, 2, max_features, embedding_dim)
 model.summary()
 model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
