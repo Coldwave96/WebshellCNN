@@ -104,9 +104,9 @@ pip install -r requirements.txt
 |--config.folder|Output/|Folder which contains all config and weight of model/scaler/TextVectorizer|
 |--data.unknown_folder|Dataset/predict|Folder to be detected|
 |--data.file_extensions|['.php', '.asp', '.aspx', '.jsp', '.java']|File extension list for training|
-|--train.max_features|5000|Max tokens for TextVectorizer|
-|--train.sequence_length|1024|Output sequence length for TextVectorizer|
-|--train.embedding_dim|300|Ouput dimensions of the embedding layer|
+|--predict.max_features|5000|Max tokens for TextVectorizer|
+|--predict.sequence_length|1024|Output sequence length for TextVectorizer|
+|--predict.embedding_dim|300|Ouput dimensions of the embedding layer|
 
 **⚠️`config.version`/`data.file_extensions`/`train.max_features`/`train.sequence_length`/`train.embedding_dim`参数需要和训练时设置的参数一致。**
 
