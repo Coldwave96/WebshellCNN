@@ -70,4 +70,5 @@ model = utils.build_model(sequence_length, 2, max_features, embedding_dim)
 model.load_weights(model_weights_path)
 
 predictions = model.predict([x_textcnn_unknown, x_file_info_unknown])
-print(predictions)
+unknown_df['predict'] = predictions
+print(unknown_df)

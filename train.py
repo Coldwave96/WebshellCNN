@@ -37,6 +37,15 @@ parser.add_argument("--train.sequence_length", type=int, default=default_sequenc
 default_embedding_dim = 300
 parser.add_argument("--train.embedding_dim", type=int, default=default_embedding_dim, help=f"Ouput dimensions of the embedding layer (default: {default_embedding_dim})")
 
+default_num_epochs = 5
+parser.add_argument("--train.num_epochs", type=int, default=default_num_epochs, help=f"Number of training epochs (default: {default_num_epochs})")
+
+default_batch_size = 32
+parser.add_argument("--train.batch_size", type=int, default=default_batch_size, help=f"Training batch size (default: {default_batch_size})")
+
+default_validation_split = 0.2
+parser.add_argument("--train.validation_split", type=float, default=default_validation_split, help=f"Proportion of validation split in train dataset (default: {default_validation_split})")
+
 FLAGS = vars(parser.parse_args())
 
 for key, value in FLAGS.items():
@@ -95,7 +104,7 @@ model = utils.build_model(sequence_length, 2, max_features, embedding_dim)
 model.summary()
 model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
-model.fit([X_textcnn_train, X_classification_train], y_train, epochs=5, batch_size=32, validation_split=0.2)
+model.fit([X_textcnn_train, X_classification_train], y_train, epochs=FLAGS["train.num_epochs"], batch_size=FLAGS["train.batch_size"], validation_split=FLAGS["train.validation_split"])
 
 y_pred = model.predict([X_textcnn_test, X_classification_test])
 y_pred_binary = np.round(y_pred)
